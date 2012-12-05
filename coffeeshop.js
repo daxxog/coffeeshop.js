@@ -1,34 +1,57 @@
-var express = require('express');
-var nodestatic = require('node-static');
-var mu = require('mu2');
-var stream = require('stream');
-
-var file = new(nodestatic.Server)('./');
-var app = express();
-
-app.get('/', function(req, res){
-    req.addListener('end', function () {
-        var writestream = new stream.Stream();
-        writestream.writable = true;
-        writestream.write = function (data) {
-          return true // true means 'yes i am ready for more data now'
-          // OR return false and emit('drain') when ready later
+/* UMD LOADER: https://github.com/umdjs/umd/blob/master/returnExports.js */
+(function (root, factory) {
+    if (typeof exports === 'object') {
+        // Node. Does not work with strict CommonJS, but
+        // only CommonJS-like enviroments that support module.exports,
+        // like Node.
+        module.exports = factory();
+    } else if (typeof define === 'function' && define.amd) {
+        // AMD. Register as an anonymous module.
+        define(factory);
+    } else {
+        // Browser globals (root is window)
+        root.returnExports = factory();
+  }
+}(this, function () {
+    var express = require('express'),
+        nodestatic = require('node-static');
+        
+    var cs = {};
+        cs.express = express;
+        cs.nodestatic = nodestatic;
+        
+    var app = express(),
+        server = new(nodestatic.Server)('./static');
+        
+        cs.app = app;
+    
+    cs.bind = function(dynamic, data) {
+        if(typeof dynamic == 'object') {
+            dynamic.bind(app, express, data);
+        } else if(typeof dynamic == 'string') {
+            var _server = new(nodestatic.Server)(dynamic);
+            
+            app.get('*', function(req, res){
+                req.addListener('end', function () {
+                    _server.serve(req, res);
+                });
+            });
+        } else {
+            app.get('*', function(req, res){
+                req.addListener('end', function () {
+                    server.serve(req, res);
+                });
+            });
         }
-        writestream.end = function (data) {
-          // no more writes after end
-          // emit "close" (optional)
-        }
-        //
-        // Serve files!
-        //
-        var stream = mu.compileAndRender('index.html', {title: "coffeeshop.js"});
-        //file.serve(req, res);
-        stream.pipe(res);
-        //console.log(stream);
-    });
-    req.addListener('end', function () {
-        console.log("END!");
-    });
-});
+    };
+    
+    cs.listen = function(port, hostname, backlog, callback) {
+        app.listen(port, hostname, backlog, callback);
+    };
+    
+    cs.set = function(name, value) {
+        app.set(name, value);
+    };
 
-app.listen(process.env.PORT, process.env.IP);
+    return cs;
+}));

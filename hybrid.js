@@ -13,13 +13,14 @@
         root.returnExports = factory();
   }
 }(this, function() {
-    var dynamic = {};
-    
-    dynamic.bind = function(app, express) {
-        app.get('/dynamic', function(req, res){
-            res.send(app.get('message'));
-        });
+    var hybrid = {
+        fresh: function() {
+            return true;
+        },
+        render: function(fn, data) {
+            return fn+' : '+data;
+        },
     };
     
-    return dynamic;
+    return hybrid;
 }));

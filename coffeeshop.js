@@ -14,11 +14,14 @@
   }
 }(this, function () {
     var express = require('express'),
-        nodestatic = require('node-static');
+        nodestatic = require('node-static'),
+        async = require('async'),
+        fs = require('fs');
         
     var cs = {};
         cs.express = express;
         cs.nodestatic = nodestatic;
+        cs.async = async;
         
     var app = express(),
         server = new(nodestatic.Server)('./static');
@@ -52,6 +55,77 @@
     cs.set = function(name, value) {
         app.set(name, value);
     };
+    
+    //walk() async function from: http://stackoverflow.com/a/5827895
+    cs.walk = function(dir, done) {
+        var results = [];
+        fs.readdir(dir, function(err, list) {
+            if (err) return done(err);
+            var pending = list.length;
+            if (!pending) return done(null, results);
+            list.forEach(function(file) {
+                file = dir + '/' + file;
+                fs.stat(file, function(err, stat) {
+                    if (stat && stat.isDirectory()) {
+                        walk(file, function(err, res) {
+                            results = results.concat(res);
+                            if (!--pending) done(null, results);
+                        });
+                    }
+                    else {
+                        results.push(file);
+                        if (!--pending) done(null, results);
+                    }
+                });
+            });
+        });
+    };
+    
+    cs.hybridchain = [];
+    cs.hybrid = function(templatedir, hybrid, staticdir) {
+        cs.hybridchain.push({
+            "templatedir": templatedir,
+            "hybrid": hybrid,
+            "staticdir": staticdir
+        });
+    };
+    
+    async.whilst(
+        function() { //infinite loop
+            return true;
+        },
+        function(callback) {
+            cs.hybridchain.forEach(function(v, i, a) {
+                setTimeout(function() { //parallel execution
+                    if(v.hybrid.fresh()) {
+                        cs.walk(v.templatedir, function(err, struct) { //walk the dir
+                            for(var i = 0, len = struct.length; i < len; i++) { //each file in the dir
+                                fs.writeFileSync(
+                                    struct[i].replace(v.templatedir, v.staticdir),
+                                    v.hybrid.render(
+                                        struct[i],
+                                        fs.readFileSync(
+                                            struct[i],
+                                            'utf-8'
+                                        )
+                                    )
+                                );
+                            }
+                            if(err) {
+                                console.error("cs.hybrid: error reading dir "+v.templatedir);
+                            }
+                        });
+                    }
+                }, 1);
+            });
+            
+            setTimeout(callback, 2000);
+        },
+        function(err) {
+            console.error('cs.hybrid: ');
+            console.error(err);
+        }
+    );
 
     return cs;
 }));

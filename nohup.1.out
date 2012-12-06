@@ -1,0 +1,47 @@
+Wed Dec  5 20:45:32 [initandlisten] MongoDB starting : pid=22806 port=27017 dbpath=/home/daxxog/db 64-bit host=0--0---0
+Wed Dec  5 20:45:32 [initandlisten] db version v2.0.4, pdfile version 4.5
+Wed Dec  5 20:45:32 [initandlisten] git version: nogitversion
+Wed Dec  5 20:45:32 [initandlisten] build info: Linux yellow 2.6.24-29-server #1 SMP Tue Oct 11 15:57:27 UTC 2011 x86_64 BOOST_LIB_VERSION=1_46_1
+Wed Dec  5 20:45:32 [initandlisten] options: { dbpath: "/home/daxxog/db" }
+Wed Dec  5 20:45:32 [initandlisten] journal dir=/home/daxxog/db/journal
+Wed Dec  5 20:45:32 [initandlisten] recover : no journal files present, no recovery needed
+Wed Dec  5 20:45:37 [initandlisten] preallocateIsFaster=true 32.2
+Wed Dec  5 20:45:41 [initandlisten] preallocateIsFaster=true 34.66
+Wed Dec  5 20:45:49 [initandlisten] preallocateIsFaster=true 26.7
+Wed Dec  5 20:45:49 [initandlisten] preallocateIsFaster check took 16.136 secs
+Wed Dec  5 20:45:49 [initandlisten] preallocating a journal file /home/daxxog/db/journal/prealloc.0
+		199229440/1073741824	18%
+		304087040/1073741824	28%
+		492830720/1073741824	45%
+		702545920/1073741824	65%
+		912261120/1073741824	84%
+Wed Dec  5 20:46:09 [initandlisten] preallocating a journal file /home/daxxog/db/journal/prealloc.1
+		209715200/1073741824	19%
+		346030080/1073741824	32%
+		576716800/1073741824	53%
+		796917760/1073741824	74%
+		1006632960/1073741824	93%
+Wed Dec  5 20:46:29 [initandlisten] preallocating a journal file /home/daxxog/db/journal/prealloc.2
+		167772160/1073741824	15%
+		304087040/1073741824	28%
+		524288000/1073741824	48%
+		723517440/1073741824	67%
+		933232640/1073741824	86%
+Wed Dec  5 20:46:49 [websvr] ERROR: listen(): bind() failed errno:98 Address already in use for socket: 0.0.0.0:28017
+Wed Dec  5 20:46:49 [websvr] ERROR:   addr already in use
+Wed Dec  5 20:46:49 [initandlisten] ERROR: listen(): bind() failed errno:98 Address already in use for socket: 0.0.0.0:27017
+Wed Dec  5 20:46:49 [initandlisten] ERROR:   addr already in use
+Wed Dec  5 20:46:49 [initandlisten] now exiting
+Wed Dec  5 20:46:49 dbexit: 
+Wed Dec  5 20:46:49 [initandlisten] shutdown: going to close listening sockets...
+Wed Dec  5 20:46:49 [initandlisten] shutdown: going to flush diaglog...
+Wed Dec  5 20:46:49 [initandlisten] shutdown: going to close sockets...
+Wed Dec  5 20:46:49 [initandlisten] shutdown: waiting for fs preallocator...
+Wed Dec  5 20:46:49 [initandlisten] shutdown: lock for final commit...
+Wed Dec  5 20:46:49 [initandlisten] shutdown: final commit...
+Wed Dec  5 20:46:49 [initandlisten] shutdown: closing all files...
+Wed Dec  5 20:46:49 [initandlisten] closeAllFiles() finished
+Wed Dec  5 20:46:49 [initandlisten] journalCleanup...
+Wed Dec  5 20:46:49 [initandlisten] removeJournalFiles
+Wed Dec  5 20:46:49 [initandlisten] shutdown: removing fs lock...
+Wed Dec  5 20:46:49 dbexit: really exiting now

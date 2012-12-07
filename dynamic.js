@@ -1,3 +1,10 @@
+/* coffeeshop.js / dynamic.js
+ * example of a dynamic server [serve up that express-o in your coffeeshop.js]
+ * (c) 2012 David (daXXog) Volm ><> + + + <><
+ * Released under Apache License, Version 2.0:
+ * http://www.apache.org/licenses/LICENSE-2.0.html  
+ */
+
 /* UMD LOADER: https://github.com/umdjs/umd/blob/master/returnExports.js */
 (function (root, factory) {
     if (typeof exports === 'object') {
@@ -16,7 +23,7 @@
     var dynamic = {};
     
     dynamic.bind = function(app, express) {
-        app.get('/dynamic', function(req, res){
+        app.get('/expresso', function(req, res){
             res.send(app.get('message'));
         });
     };

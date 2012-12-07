@@ -1,3 +1,10 @@
+/* coffeeshop.js
+ * Full stack JavaScript. For realz.
+ * (c) 2012 David (daXXog) Volm ><> + + + <><
+ * Released under Apache License, Version 2.0:
+ * http://www.apache.org/licenses/LICENSE-2.0.html  
+ */
+
 /* UMD LOADER: https://github.com/umdjs/umd/blob/master/returnExports.js */
 (function (root, factory) {
     if (typeof exports === 'object') {
@@ -34,13 +41,13 @@
         } else if(typeof dynamic == 'string') {
             var _server = new(nodestatic.Server)(dynamic);
             
-            app.get('*', function(req, res){
+            app.get('*', function(req, res) {
                 req.addListener('end', function () {
                     _server.serve(req, res);
                 });
             });
         } else {
-            app.get('*', function(req, res){
+            app.get('*', function(req, res) {
                 req.addListener('end', function () {
                     server.serve(req, res);
                 });
@@ -81,6 +88,7 @@
         });
     };
     
+    app.set('hybrid-timer', 2000); //default hybrid-timer setting
     cs.hybridchain = [];
     cs.hybrid = function(templatedir, hybrid, staticdir) {
         cs.hybridchain.push({
@@ -95,31 +103,56 @@
             return true;
         },
         function(callback) {
-            cs.hybridchain.forEach(function(v, i, a) {
-                setTimeout(function() { //parallel execution
-                    if(v.hybrid.fresh()) {
-                        cs.walk(v.templatedir, function(err, struct) { //walk the dir
-                            for(var i = 0, len = struct.length; i < len; i++) { //each file in the dir
-                                fs.writeFileSync(
-                                    struct[i].replace(v.templatedir, v.staticdir),
-                                    v.hybrid.render(
-                                        struct[i],
-                                        fs.readFileSync(
-                                            struct[i],
-                                            'utf-8'
-                                        )
-                                    )
-                                );
-                            }
-                            if(err) {
-                                console.error("cs.hybrid: error reading dir "+v.templatedir);
-                            }
-                        });
-                    }
-                }, 1);
-            });
+            var _callback = callback; //localize callback
             
-            setTimeout(callback, 2000);
+            if(cs.hybridchain.length > 0) { //is the chain NOT empty?
+                cs.hybridchain.forEach(function(v, i, a) { //loop the chain
+                    setTimeout(function() { //parallel execution
+                        v.hybrid.fresh(function() { //check if we have fresh content
+                            cs.walk(v.templatedir, function(err, struct) { //walk the dir
+                                var _v = v; //localize v
+                                var _struct = struct; //localize struct
+                                
+                                for(var i = 0, len = struct.length; i < len; i++) { //each file in the dir
+                                    var _i = i; //localize i
+                                    
+                                    fs.readFile(struct[i], 'utf-8', //read the template file
+                                        function(err, data) {
+                                            if(!err) {
+                                                _v.hybrid.render(_struct[_i], data, function(err, data) { //render the template
+                                                    if(!err) {
+                                                        var writeTo = _struct[_i].replace(_v.templatedir, _v.staticdir);
+                                                        fs.writeFile(writeTo, data, 'utf-8', function(err) { //save the rendered template
+                                                            if(!err) {
+                                                                setTimeout(_callback, app.get('hybrid-timer')); //check for changes later
+                                                            } else {
+                                                                console.error("cs.hybrid: error writing file "+writeTo);
+                                                            }
+                                                        });
+                                                    } else {
+                                                        console.error(err);
+                                                        console.error("cs.hybrid: error rendering file "+struct[i]);
+                                                    }
+                                                });
+                                            } else {
+                                                console.error("cs.hybrid: error reading file "+struct[i]);
+                                            }
+                                        }
+                                    );
+                                }
+                                
+                                if(err) {
+                                    console.error("cs.hybrid: error reading dir "+v.templatedir);
+                                }
+                            });
+                        } , function() { //else; nothing new
+                            setTimeout(_callback, app.get('hybrid-timer')); //try again later
+                        });
+                    }, 1);
+                });
+            } else { //chain empty
+                setTimeout(callback, app.get('hybrid-timer')); //try again later
+            }
         },
         function(err) {
             console.error('cs.hybrid: ');

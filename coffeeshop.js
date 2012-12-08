@@ -110,18 +110,13 @@
                     setTimeout(function() { //parallel execution
                         v.hybrid.fresh(function() { //check if we have fresh content
                             cs.walk(v.templatedir, function(err, struct) { //walk the dir
-                                var _v = v; //localize v
-                                var _struct = struct; //localize struct
-                                
                                 for(var i = 0, len = struct.length; i < len; i++) { //each file in the dir
-                                    var _i = i; //localize i
-                                    
-                                    fs.readFile(struct[i], 'utf-8', //read the template file
-                                        function(err, data) {
+                                    (function(v, i, struct, callback) { //closure so the loop works properly
+                                        fs.readFile(struct[i], 'utf-8', function(err, data) { //read the template file
                                             if(!err) {
-                                                _v.hybrid.render(_struct[_i], data, function(err, data) { //render the template
+                                                v.hybrid.render(struct[i], data, function(err, data) { //render the template
                                                     if(!err) {
-                                                        var writeTo = _struct[_i].replace(_v.templatedir, _v.staticdir);
+                                                        var writeTo = struct[i].replace(v.templatedir, v.staticdir);
                                                         fs.writeFile(writeTo, data, 'utf-8', function(err) { //save the rendered template
                                                             if(!err) {
                                                                 setTimeout(_callback, app.get('hybrid-timer')); //check for changes later
@@ -137,8 +132,8 @@
                                             } else {
                                                 console.error("cs.hybrid: error reading file "+struct[i]);
                                             }
-                                        }
-                                    );
+                                        });
+                                    })(v, i, struct, _callback);
                                 }
                                 
                                 if(err) {

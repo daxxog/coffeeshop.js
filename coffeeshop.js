@@ -1,5 +1,5 @@
 /* coffeeshop.js
- * Full stack JavaScript. For realz.
+ * Loosely coupled full stack JavaScript. For realz.
  * (c) 2012 David (daXXog) Volm ><> + + + <><
  * Released under Apache License, Version 2.0:
  * http://www.apache.org/licenses/LICENSE-2.0.html  

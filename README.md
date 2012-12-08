@@ -1,12 +1,16 @@
-coffeeshop.js
+[coffeeshop.js](https://github.com/daxxog/coffeeshop.js)
 =============
-WORK IN PROGRESS!!
+Loosely coupled full stack JavaScript. For realz.
 
-Full stack JavaScript
+Current Features
+----------------
+* Backend: [node.js](https://github.com/joyent/node)
+* Framework: [express](https://github.com/visionmedia/express)
+* Static Server: [node-static](https://github.com/cloudhead/node-static)
+* Loosely coupled hybrid rendering, feel free to create your own hybrid render
+  * [hybrid.mongodb.mustache.js](https://github.com/daxxog/coffeeshop.js/blob/master/hybrid.mongodb.mustache.js) : [mongoDB](https://github.com/mongodb/node-mongodb-native) / [mustache.js](https://github.com/janl/mustache.js/)
 
-* Backend: node.js
-* Framework: express.js
-* Database: mongoDB
+TODO
+----
 * Authentication: passport.js
-* Templates: mustache.js
-* Client library: jQuery
+* NPM

@@ -24,6 +24,9 @@ cd templates
 wget https://raw.github.com/daxxog/coffeeshop.js/master/templates/index.html
 cd ..
 
+#get server.js npm dependencies
+npm install mongodb mustache
+
 #server.js requires dynamic.js, hybrid.mongodb.mustache.js, templates dir, static dir
 wget https://raw.github.com/daxxog/coffeeshop.js/master/server.js
 ```

@@ -5,7 +5,7 @@
  * http://www.apache.org/licenses/LICENSE-2.0.html  
  */
 
-var cs = require('./coffeeshop.js'),
+var cs = require('coffeeshop'),
     dynamic = require('./dynamic.js'),
     hybrid = require('./hybrid.mongodb.mustache');
     

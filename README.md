@@ -7,6 +7,26 @@ Install
 ```bash
 npm install https://github.com/daxxog/coffeeshop.js/tarball/master
 ```
+examples
+```bash
+#hybrid.mongodb.mustache.js
+wget https://raw.github.com/daxxog/coffeeshop.js/master/hybrid.mongodb.mustache.js
+
+#dynamic.js
+wget https://raw.github.com/daxxog/coffeeshop.js/master/dynamic.js
+
+#make dirs for server.js example
+mkdir templates
+mkdir static
+
+#download template
+cd templates
+wget https://raw.github.com/daxxog/coffeeshop.js/master/templates/index.html
+cd ..
+
+#server.js requires dynamic.js, hybrid.mongodb.mustache.js, templates dir, static dir
+wget https://raw.github.com/daxxog/coffeeshop.js/master/server.js
+```
 
 Current Features
 ----------------

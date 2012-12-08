@@ -1,0 +1,22 @@
+{
+    "name"        : "coffeeshop",
+    "description" : "Loosely coupled full stack JavaScript. For realz.",
+    "homepage"    : "https://github.com/daxxog/coffeeshop.js",
+    "main"        : "coffeeshop.js",
+    "version"     : "0.0.1",
+    "engines": { "node" : ">=0.8.15" },
+    "maintainers": [{
+        "name"  : "David Volm",
+        "email" : "david@volminator.com",
+        "web"   : "http://daxxog.com/"
+    }],
+    "repositories": [{
+        "type" : "git",
+        "url"  : "https://github.com/daxxog/coffeeshop.js.git"
+    }],
+    "dependencies": {
+        "express" : "*",
+        "node-static" : "*",
+        "async" : "*"
+    }
+}

@@ -2,6 +2,12 @@
 =============
 Loosely coupled full stack JavaScript. For realz.
 
+Install
+-------
+```bash
+npm install https://github.com/daxxog/coffeeshop.js/tarball/master
+```
+
 Current Features
 ----------------
 * Backend: [node.js](https://github.com/joyent/node)
@@ -13,4 +19,3 @@ Current Features
 TODO
 ----
 * Authentication: passport.js
-* NPM

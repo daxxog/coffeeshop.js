@@ -41,4 +41,5 @@ Current Features
 
 TODO
 ----
+* Hybrid example with local file system change detection, UglifyJS, and less css templates.
 * Authentication: passport.js

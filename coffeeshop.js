@@ -98,12 +98,31 @@
         });
     };
     
+    cs.once = app.once = function(fu) { //Returns a function that will run once and only once.
+        var extfu = {};
+
+        extfu = function(fu) { //object that runs a function that returns a function! #codeception
+            return (function(extfu) {
+                return function() {
+                    if(!extfu.ran) { //if the function hasn't run
+                        extfu.ran = true; //we ran it
+                        return fu(); //run function and return the result
+                    }
+                };
+            })(this);
+        };
+
+        extfu.prototype.ran = false; //we didn't run it yet
+
+        return new extfu(fu); //create some #codeception
+    }
+    
     async.whilst(
         function() { //infinite loop
             return true;
         },
         function(callback) {
-            var _callback = callback; //localize callback
+            var _callback = cs.once(callback); //localize callback and make it only callable once
             
             if(cs.hybridchain.length > 0) { //is the chain NOT empty?
                 cs.hybridchain.forEach(function(v, i, a) { //loop the chain
@@ -114,9 +133,10 @@
                                     (function(v, i, struct, callback) { //closure so the loop works properly
                                         fs.readFile(struct[i], 'utf-8', function(err, data) { //read the template file
                                             if(!err) {
-                                                v.hybrid.render(struct[i], data, function(err, data) { //render the template
+                                                var _writeTo = struct[i].replace(v.templatedir, v.staticdir);
+                                                v.hybrid.render(struct[i], data, function(err, data, to) { //render the template
                                                     if(!err) {
-                                                        var writeTo = struct[i].replace(v.templatedir, v.staticdir);
+                                                        var writeTo = (typeof to == 'undefined') ? _writeTo : to; //see if we need to change writeTo
                                                         fs.writeFile(writeTo, data, 'utf-8', function(err) { //save the rendered template
                                                             if(!err) {
                                                                 setTimeout(_callback, app.get('hybrid-timer')); //check for changes later
@@ -128,7 +148,7 @@
                                                         console.error(err);
                                                         console.error("cs.hybrid: error rendering file "+struct[i]);
                                                     }
-                                                });
+                                                }, _writeTo);
                                             } else {
                                                 console.error("cs.hybrid: error reading file "+struct[i]);
                                             }

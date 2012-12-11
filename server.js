@@ -7,7 +7,7 @@
 
 var cs = require('coffeeshop'),
     dynamic = require('./dynamic.js'),
-    hybrid = require('./hybrid.mongodb.mustache');
+    hybrid = require('./hybrid.mongodb.mustache.uglify-js.less');
     
 cs.set('message', 'Hello World!'); //pass a message to dynamic
 cs.set('hybrid-timer', 3000); //set the update interval for hybrid pages

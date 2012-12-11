@@ -31,13 +31,15 @@
         cs.async = async;
         
     var app = express(),
+        http = require('http').createServer(app),
+        io = require('socket.io').listen(http),
         server = new(nodestatic.Server)('./static');
         
         cs.app = app;
     
     cs.bind = function(dynamic, data) {
         if(typeof dynamic == 'object') {
-            dynamic.bind(app, express, data);
+            dynamic.bind(app, express, io, data);
         } else if(typeof dynamic == 'string') {
             var _server = new(nodestatic.Server)(dynamic);
             
@@ -55,8 +57,34 @@
         }
     };
     
+    cs.modes = {};
+    cs.mode = function(mode, set) { //bind a mode to coffeeshop or change the mode
+        if(typeof set == 'function') { //if we are setting a mode
+            cs.modes[mode] = set; //bind to modes
+        } else {
+            (typeof cs.modes[mode] == 'undefined') ? console.error("cs.mode: invalid mode!") : cs.modes[mode](cs); //run the mode
+        }
+    };
+    
+    cs.mode("production", function() { //default production mode
+        //socket.io production settings https://github.com/LearnBoost/Socket.IO/wiki/Configuring-Socket.IO
+        io.enable('browser client minification');  // send minified client
+        io.enable('browser client etag');          // apply etag caching logic based on version number
+        io.enable('browser client gzip');          // gzip the file
+        io.set('log level', 1);                    // reduce logging
+        io.set('transports', [                     // enable all transports (optional if you want flashsocket)
+            'websocket'
+          , 'flashsocket'
+          , 'htmlfile'
+          , 'xhr-polling'
+          , 'jsonp-polling'
+        ]);
+        
+        app.set('hybrid-timer', 30000); //thirty second timer for hybrid renders
+    });
+    
     cs.listen = function(port, hostname, backlog, callback) {
-        app.listen(port, hostname, backlog, callback);
+        http.listen(port, hostname, backlog, callback);
     };
     
     cs.set = function(name, value) {
@@ -74,7 +102,7 @@
                 file = dir + '/' + file;
                 fs.stat(file, function(err, stat) {
                     if (stat && stat.isDirectory()) {
-                        walk(file, function(err, res) {
+                        cs.walk(file, function(err, res) {
                             results = results.concat(res);
                             if (!--pending) done(null, results);
                         });

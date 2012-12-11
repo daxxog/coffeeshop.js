@@ -22,9 +22,13 @@
 }(this, function() {
     var dynamic = {};
     
-    dynamic.bind = function(app, express) {
+    dynamic.bind = function(app, express, io, data) {
         app.get('/expresso', function(req, res){
             res.send(app.get('message'));
+        });
+        
+        io.sockets.on('connection', function (socket) {
+            socket.emit('alert', 'coffeeshop.js is cool! alert() is not!');
         });
     };
     

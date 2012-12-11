@@ -14,7 +14,6 @@
 }
 */
 
-
 /* UMD LOADER: https://github.com/umdjs/umd/blob/master/returnExports.js */
 (function (root, factory) {
     if (typeof exports === 'object') {
@@ -67,7 +66,7 @@
         extfu.prototype.ran = false; //we didn't run it yet
 
         return new extfu(fu); //create some #codeception
-    }
+    };
     
     var hybrid = {
         fresh: function(_cbtrue, _cbfalse) { //two callbacks one if fresh, two if not

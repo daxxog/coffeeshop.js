@@ -37,7 +37,8 @@ Current Features
 ----------------
 * Backend: [node.js](https://github.com/joyent/node)
 * Framework: [express](https://github.com/visionmedia/express)
-* Static Server: [node-static](https://github.com/cloudhead/node-static)
+* Static server: [node-static](https://github.com/cloudhead/node-static)
+* Real time socket stuff: [Socket.IO](https://github.com/LearnBoost/socket.io)
 * Loosely coupled hybrid rendering, feel free to create your own hybrid render
   * [hybrid.mongodb.mustache.uglify-js.less.js](https://github.com/daxxog/coffeeshop.js/blob/master/hybrid.mongodb.mustache.uglify-js.less.js) : [mongoDB](https://github.com/mongodb/node-mongodb-native) / [mustache.js](https://github.com/janl/mustache.js/) / [UglifyJS](https://github.com/mishoo/UglifyJS2) / [less](https://github.com/cloudhead/less.js)
 

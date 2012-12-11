@@ -9,7 +9,7 @@ npm install https://github.com/daxxog/coffeeshop.js/tarball/master
 ```
 examples
 ```bash
-#hybrid.mongodb.mustache.js
+#hybrid.mongodb.mustache.uglify-js.less.js
 wget https://raw.github.com/daxxog/coffeeshop.js/master/hybrid.mongodb.mustache.uglify-js.less.js
 
 #dynamic.js

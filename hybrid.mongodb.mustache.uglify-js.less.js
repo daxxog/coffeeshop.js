@@ -69,7 +69,7 @@
     };
     
     var hybrid = {
-        fresh: function(_cbtrue, _cbfalse) { //two callbacks one if fresh, two if not
+        fresh: function(_cbtrue, _cbfalse, app, express) { //two callbacks one if fresh, two if not; express.app is passed too!
             var cbtrue = once(_cbtrue),
                 cbfalse = once(_cbfalse);
             var client = new mongo.Db('test', mongo_connect(), mongo_options); //setup the db
@@ -117,7 +117,7 @@
                 });
             });
         },
-        render: function(fn, data, cb, to) { //file name, file data, callback to call when done rendering
+        render: function(fn, data, cb, to, app, express) { //file name, file data, callback to call when done rendering, express.app
             if(local_files.indexOf(fn)==-1) { //if the local files list doesn't have this file
                 local_files.push(fn); //add the current file to the local files list
             }

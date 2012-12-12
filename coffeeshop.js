@@ -176,7 +176,7 @@
                                                         console.error(err);
                                                         console.error("cs.hybrid: error rendering file "+struct[i]);
                                                     }
-                                                }, _writeTo);
+                                                }, _writeTo, app, express);
                                             } else {
                                                 console.error("cs.hybrid: error reading file "+struct[i]);
                                             }
@@ -190,7 +190,7 @@
                             });
                         } , function() { //else; nothing new
                             setTimeout(_callback, app.get('hybrid-timer')); //try again later
-                        });
+                        }, app, express);
                     }, 1);
                 });
             } else { //chain empty

@@ -13,6 +13,7 @@ cs.set('message', 'Hello World!'); //pass a message to dynamic
 cs.mode('production'); //set the mode to production for everything
 cs.set('hybrid-timer', 3000); //set the update interval for hybrid pages
 cs.bind('./static'); //bind a directory to the app
+cs.bind('cash.js', 'npm'); //bind a local npm module to the app 
 cs.bind('./static2'); //bind a second directory to the app
 cs.bind(dynamic); //bind the dynamic server to the app
 cs.hybrid('./templates', hybrid, './static'); //read templates -> render templates -> output to static directory

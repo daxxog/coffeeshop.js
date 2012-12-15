@@ -23,7 +23,8 @@
     var express = require('express'),
         nodestatic = require('node-static'),
         async = require('async'),
-        fs = require('fs');
+        fs = require('fs'),
+        path = require('path');
         
     var cs = {};
         cs.express = express;
@@ -40,11 +41,22 @@
     cs._static_works = {}; //object that caches whether a static server can succesfully respond to a url. This way requests to servers that will respond with an error are never made
     cs._static_err = {}; //object that keeps track of what static servers responded with what error code on what file. This is so two static servers don't both send an error
     cs._static_fnd_err = {}; //object that keeps track of if we found an error type on a url. This is for the same reason as above.
-    cs.bind = function(dynamic, data) { //bind a static directory or dynamic server to the app
-        if(typeof dynamic == 'object') { //if we are binding a dynamic server
-            dynamic.bind(app, express, io, data); //bind the dynamic server
-        } else if(typeof dynamic == 'string') { //if we are binding a static directory
-            var _server = new(nodestatic.Server)(dynamic); //create a static server from the directory
+    cs.bind = function(mixed, data) { //bind a static directory or dynamic server to the app
+        if(typeof mixed == 'object') { //if we are binding a dynamic server
+            mixed.bind(app, express, io, data); //bind the dynamic server
+        } else if(typeof mixed == 'string') { //if we are binding a static directory
+            if(typeof data == 'string') { //if data is a string
+                switch(data) { //parse the data string
+                    case 'npm': //if we are binding to a static local npm module
+                        mixed = path.join('./node_modules', mixed, './cs_serve'); //point to the cs_serve directory
+                      break;
+                    
+                    default:
+                      break;
+                }
+            }
+            
+            var _server = new(nodestatic.Server)(mixed); //create a static server from the directory
             
             var _id = cs._static_stack.push(function(req, res) { //push a (req, res) function onto the stack and get the _id
                 req.addListener('end', function() { //do something once we have the request data

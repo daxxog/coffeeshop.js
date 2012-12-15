@@ -32,32 +32,68 @@
         
     var app = express(),
         http = require('http').createServer(app),
-        io = require('socket.io').listen(http),
-        server = new(nodestatic.Server)('./static');
+        io = require('socket.io').listen(http);
         
         cs.app = app;
     
-    cs.bind = function(dynamic, data) {
-        if(typeof dynamic == 'object') {
-            dynamic.bind(app, express, io, data);
-        } else if(typeof dynamic == 'string') {
-            var _server = new(nodestatic.Server)(dynamic);
+    cs._static_stack = []; //stack that holds (req, res) functions for static servers
+    cs._static_works = {}; //object that caches whether a static server can succesfully respond to a url. This way requests to servers that will respond with an error are never made
+    cs._static_err = {}; //object that keeps track of what static servers responded with what error code on what file. This is so two static servers don't both send an error
+    cs._static_fnd_err = {}; //object that keeps track of if we found an error type on a url. This is for the same reason as above.
+    cs.bind = function(dynamic, data) { //bind a static directory or dynamic server to the app
+        if(typeof dynamic == 'object') { //if we are binding a dynamic server
+            dynamic.bind(app, express, io, data); //bind the dynamic server
+        } else if(typeof dynamic == 'string') { //if we are binding a static directory
+            var _server = new(nodestatic.Server)(dynamic); //create a static server from the directory
             
-            app.get('*', function(req, res) {
-                req.addListener('end', function () {
-                    _server.serve(req, res);
+            var _id = cs._static_stack.push(function(req, res) { //push a (req, res) function onto the stack and get the _id
+                req.addListener('end', function() { //do something once we have the request data
+                    if(typeof cs._static_works[req.url] == 'undefined' || cs._static_works[req.url] == _id) { //if we don't know what static server works for this url or we do know and this server is it
+                        _server.serve(req, res, function (err, result) { //serve it up
+                            if(err) { //if we need to handle an error
+                            
+                                /* START SETUP VARS */
+                                if(typeof cs._static_err[err.status] == 'undefined') {
+                                    cs._static_err[err.status] = {};
+                                }
+                                
+                                if(typeof cs._static_err[err.status][req.url] == 'undefined') {
+                                    cs._static_err[err.status][req.url] = [];
+                                }
+                                
+                                if(typeof cs._static_fnd_err[err.status] == 'undefined') {
+                                    cs._static_fnd_err[err.status] = {}
+                                }
+                                
+                                if(typeof cs._static_err[err.status][req.url] == 'undefined') {
+                                    cs._static_err[err.status][req.url] = false;
+                                }
+                                /* END SETUP VARS */
+                                
+                                if(cs._static_err[err.status][req.url].length === (cs._static_stack.length - 1)) { //if every other server got the same error
+                                    if(cs._static_fnd_err[err.status][req.url] === false || _id === (cs._static_stack.length - 1)) { //if we have't found this error on this url before or if this is the last server on the stack
+                                        cs._static_fnd_err[err.status][req.url] = true; //tell other servers we found and handled this error on this url
+                                        res.writeHead(err.status, err.headers); //output HTTP error
+                                        res.end(); //end of response
+                                    }
+                                } else { //another server might be able to serve this url
+                                    if(cs._static_err[err.status][req.url].indexOf(_id) === -1) { //if we have't reported that we got this error before
+                                        cs._static_err[err.status][req.url].push(_id); //report that we got the error by pushing it onto a stack
+                                    }
+                                }
+                            } else { //we served the file successfully
+                                cs._static_works[req.url] = _id; //tell the other servers this server should handle all future requests to this url
+                            }
+                        });
+                    }
                 });
-            });
-        } else {
-            app.get('*', function(req, res) {
-                req.addListener('end', function () {
-                    server.serve(req, res);
-                });
-            });
+            }) - 1;
+        } else { //blank first argument
+            cs.bind('./static'); //default static directory
         }
     };
     
-    cs.modes = {};
+    cs.modes = {}; //object that holds functions that are intended set up and change to different modes
     cs.mode = function(mode, set) { //bind a mode to coffeeshop or change the mode
         if(typeof set == 'function') { //if we are setting a mode
             cs.modes[mode] = set; //bind to modes
@@ -84,10 +120,18 @@
     });
     
     cs.listen = function(port, hostname, backlog, callback) {
-        http.listen(port, hostname, backlog, callback);
+        if(cs._static_stack !== 0) { //if the static stack isn't empty
+            app.get('*', function(req, res) { //static requests
+                cs._static_stack.forEach(function(v, i, a) { //for every static server
+                    v(req, res); //try to handle the request
+                });
+            });
+        }
+        
+        http.listen(port, hostname, backlog, callback); //pass arguments to http.listen
     };
     
-    cs.set = function(name, value) {
+    cs.set = function(name, value) { //wrapper for app.set(name, value)
         app.set(name, value);
     };
     

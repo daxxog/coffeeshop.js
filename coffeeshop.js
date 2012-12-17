@@ -133,11 +133,13 @@
     
     cs.listen = function(port, hostname, backlog, callback) {
         if(cs._static_stack !== 0) { //if the static stack isn't empty
-            app.get('*', function(req, res) { //static requests
+            app.static_route = function(req, res) { //static requests
                 cs._static_stack.forEach(function(v, i, a) { //for every static server
                     v(req, res); //try to handle the request
                 });
-            });
+            };
+            
+            app.get('*', app.static_route);
         }
         
         http.listen(port, hostname, backlog, callback); //pass arguments to http.listen

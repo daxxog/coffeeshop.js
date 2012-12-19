@@ -59,46 +59,44 @@
             var _server = new(nodestatic.Server)(mixed); //create a static server from the directory
             
             var _id = cs._static_stack.push(function(req, res) { //push a (req, res) function onto the stack and get the _id
-                req.addListener('end', function() { //do something once we have the request data
-                    if(typeof cs._static_works[req.url] == 'undefined' || cs._static_works[req.url] == _id) { //if we don't know what static server works for this url or we do know and this server is it
-                        _server.serve(req, res, function (err, result) { //serve it up
-                            if(err) { //if we need to handle an error
-                            
-                                /* START SETUP VARS */
-                                if(typeof cs._static_err[err.status] == 'undefined') {
-                                    cs._static_err[err.status] = {};
-                                }
-                                
-                                if(typeof cs._static_err[err.status][req.url] == 'undefined') {
-                                    cs._static_err[err.status][req.url] = [];
-                                }
-                                
-                                if(typeof cs._static_fnd_err[err.status] == 'undefined') {
-                                    cs._static_fnd_err[err.status] = {}
-                                }
-                                
-                                if(typeof cs._static_err[err.status][req.url] == 'undefined') {
-                                    cs._static_err[err.status][req.url] = false;
-                                }
-                                /* END SETUP VARS */
-                                
-                                if(cs._static_err[err.status][req.url].length === (cs._static_stack.length - 1)) { //if every other server got the same error
-                                    if(cs._static_fnd_err[err.status][req.url] === false || _id === (cs._static_stack.length - 1)) { //if we have't found this error on this url before or if this is the last server on the stack
-                                        cs._static_fnd_err[err.status][req.url] = true; //tell other servers we found and handled this error on this url
-                                        res.writeHead(err.status, err.headers); //output HTTP error
-                                        res.end(); //end of response
-                                    }
-                                } else { //another server might be able to serve this url
-                                    if(cs._static_err[err.status][req.url].indexOf(_id) === -1) { //if we have't reported that we got this error before
-                                        cs._static_err[err.status][req.url].push(_id); //report that we got the error by pushing it onto a stack
-                                    }
-                                }
-                            } else { //we served the file successfully
-                                cs._static_works[req.url] = _id; //tell the other servers this server should handle all future requests to this url
+                if(typeof cs._static_works[req.url] == 'undefined' || cs._static_works[req.url] == _id) { //if we don't know what static server works for this url or we do know and this server is it
+                    _server.serve(req, res, function (err, result) { //serve it up
+                        if(err) { //if we need to handle an error
+                        
+                            /* START SETUP VARS */
+                            if(typeof cs._static_err[err.status] == 'undefined') {
+                                cs._static_err[err.status] = {};
                             }
-                        });
-                    }
-                });
+                            
+                            if(typeof cs._static_err[err.status][req.url] == 'undefined') {
+                                cs._static_err[err.status][req.url] = [];
+                            }
+                            
+                            if(typeof cs._static_fnd_err[err.status] == 'undefined') {
+                                cs._static_fnd_err[err.status] = {}
+                            }
+                            
+                            if(typeof cs._static_err[err.status][req.url] == 'undefined') {
+                                cs._static_err[err.status][req.url] = false;
+                            }
+                            /* END SETUP VARS */
+                            
+                            if(cs._static_err[err.status][req.url].length === (cs._static_stack.length - 1)) { //if every other server got the same error
+                                if(cs._static_fnd_err[err.status][req.url] === false || _id === (cs._static_stack.length - 1)) { //if we have't found this error on this url before or if this is the last server on the stack
+                                    cs._static_fnd_err[err.status][req.url] = true; //tell other servers we found and handled this error on this url
+                                    res.writeHead(err.status, err.headers); //output HTTP error
+                                    res.end(); //end of response
+                                }
+                            } else { //another server might be able to serve this url
+                                if(cs._static_err[err.status][req.url].indexOf(_id) === -1) { //if we have't reported that we got this error before
+                                    cs._static_err[err.status][req.url].push(_id); //report that we got the error by pushing it onto a stack
+                                }
+                            }
+                        } else { //we served the file successfully
+                            cs._static_works[req.url] = _id; //tell the other servers this server should handle all future requests to this url
+                        }
+                    });
+                }
             }) - 1;
         } else { //blank first argument
             cs.bind('./static'); //default static directory

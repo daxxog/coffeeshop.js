@@ -37,6 +37,12 @@
         
         cs.app = app;
     
+    cs.debug = function(dbg) {
+        console.log('CS-DEBUG-');
+        console.log(dbg);
+        console.log('-CS-DEBUG');
+    };
+    
     cs._static_stack = []; //stack that holds (req, res) functions for static servers
     cs._static_works = {}; //object that caches whether a static server can succesfully respond to a url. This way requests to servers that will respond with an error are never made
     cs._static_err = {}; //object that keeps track of what static servers responded with what error code on what file. This is so two static servers don't both send an error
@@ -134,6 +140,7 @@
     cs.listen = function(port, hostname, backlog, callback) {
         if(cs._static_stack !== 0) { //if the static stack isn't empty
             app.static_route = function(req, res) { //static requests
+                cs.debug('static');
                 cs._static_stack.forEach(function(v, i, a) { //for every static server
                     v(req, res); //try to handle the request
                 });

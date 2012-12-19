@@ -3,7 +3,7 @@
     "description" : "Loosely coupled full stack JavaScript. For realz.",
     "homepage"    : "https://github.com/daxxog/coffeeshop.js",
     "main"        : "coffeeshop.js",
-    "version"     : "0.0.9",
+    "version"     : "0.0.10",
     "engines": { "node" : ">=0.8.15" },
     "maintainers": [{
         "name"  : "David Volm",
@@ -17,7 +17,7 @@
     "dependencies": {
         "express" : "*",
         "socket.io" : "*",
-        "https://github.com/daxxog/node-static/tarball/fwh" : "*",
+        "daxxog-node-static-v0.6.2-15-g9696dba.tar.gz" : "*",
         "async" : "*"
     }
 }

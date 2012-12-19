@@ -38,9 +38,13 @@
         cs.app = app;
     
     cs.debug = function(dbg) {
-        console.log('CS-DEBUG-');
-        console.log(dbg);
-        console.log('-CS-DEBUG');
+        if(typeof dbg == 'string') {
+            console.log('CS-DEBUG: '+dbg);
+        } else {
+            console.log('CS-DEBUG-');
+            console.log(dbg);
+            console.log('-CS-DEBUG');
+        }
     };
     
     cs._static_stack = []; //stack that holds (req, res) functions for static servers
@@ -68,6 +72,7 @@
                 req.addListener('end', function() { //do something once we have the request data
                     if(typeof cs._static_works[req.url] == 'undefined' || cs._static_works[req.url] == _id) { //if we don't know what static server works for this url or we do know and this server is it
                         _server.serve(req, res, function (err, result) { //serve it up
+                            cs.debug('serve');
                             if(err) { //if we need to handle an error
                             
                                 /* START SETUP VARS */

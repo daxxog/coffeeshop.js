@@ -8,7 +8,7 @@ daXXog's DEBUG BRANCH
 Install
 -------
 ```bash
-npm install https://github.com/daxxog/coffeeshop.js/tarball/master
+npm install https://github.com/daxxog/coffeeshop.js/tarball/debug
 ```
 examples
 ```bash

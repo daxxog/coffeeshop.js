@@ -69,7 +69,8 @@
             var _server = new(nodestatic.Server)(mixed); //create a static server from the directory
             
             var _id = cs._static_stack.push(function(req, res) { //push a (req, res) function onto the stack and get the _id
-                req.addListener('end', function() { //do something once we have the request data
+                
+                //req.addListener('end', function() { //do something once we have the request data
                     if(typeof cs._static_works[req.url] == 'undefined' || cs._static_works[req.url] == _id) { //if we don't know what static server works for this url or we do know and this server is it
                         _server.serve(req, res, function (err, result) { //serve it up
                             cs.debug('serve');
@@ -109,7 +110,7 @@
                             }
                         });
                     }
-                });
+                //});
             }) - 1;
         } else { //blank first argument
             cs.bind('./static'); //default static directory

@@ -17,7 +17,7 @@
     "dependencies": {
         "express" : "*",
         "socket.io" : "*",
-        "git://github.com/daxxog/node-static.git#fixWriteHead" : "*",
+        "git://github.com/daxxog/node-static.git#fwh" : "*",
         "async" : "*"
     }
 }

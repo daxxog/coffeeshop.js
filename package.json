@@ -17,7 +17,9 @@
     "dependencies": {
         "express" : "*",
         "socket.io" : "*",
-        "git://github.com/daxxog/node-static.git#fwh" : "*",
         "async" : "*"
+    },
+    "scripts": {
+        "install": "npm install https://github.com/daxxog/node-static/tarball/fwh"
     }
 }

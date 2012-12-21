@@ -37,7 +37,7 @@ Current Features
 ----------------
 * Backend: [node.js](https://github.com/joyent/node)
 * Framework: [express](https://github.com/visionmedia/express)
-* Static server: [node-static](https://github.com/cloudhead/node-static)
+* Static server: [express](https://github.com/visionmedia/express).static middleware
   * Multiple servers supported
   * Bind a npm to serve statically: [example npm package](https://github.com/daxxog/cash.js)
   * Bind a static 404 page

@@ -50,7 +50,7 @@
                         mixed = path.join('./node_modules', mixed, './cs_serve'); //point to the cs_serve directory
                       break;
                     case '404': //if we are binding a 404 page
-                        cs.four_o_four = mixed;
+                        cs.four_o_four = mixed; //bind the 404 page
                         continue_bind = false; //don't continue the bind operation
                       break;
                     default:
@@ -59,7 +59,7 @@
             }
             
             if(continue_bind === true) {
-                cs._static_stack.push(function() {
+                cs._static_stack.push(function() { //push a static server factory onto the stack
                     app.use(express.static(mixed));
                 });
             }
@@ -99,17 +99,19 @@
             cs._static_stack.forEach(function(v, i, a) { //for every static server factory
                 v(); //create a static server
             });
+            
+            delete cs._static_stack; //remove the stack
         }
         
         if(typeof cs.four_o_four == 'string') {
             fs.readFile(cs.four_o_four, function(err, data) {
                 app.use(function(req, res) {
                     if(!err) {
-                        res.type(path.extname(cs.four_o_four));
-                        res.send(404, data);
+                        res.type(path.extname(cs.four_o_four)); //send the headers based on the file name
+                        res.send(404, data); //send a 404 with the data
                     } else {
                         console.log(err);
-                        //res.send('', 500);
+                        res.send(500); //internal server error
                     }
                 });
             });

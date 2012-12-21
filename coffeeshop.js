@@ -37,7 +37,34 @@
     
     app.use(express.compress());
     
-    cs._static_stack = []; //stack that holds static server factory functions
+    cs._mwstack = {}; //middleware stack object
+    app.mwstack = cs.stack = function(name, mw) { //stack some middleware
+        if(typeof mw == 'function') { //if middleware is a function
+            if(typeof cs._mwstack[name] == 'undefined') { //if we need to a place to store this middleware
+                cs._mwstack[name] = []; //make a new stack
+            }
+            
+            cs._mwstack[name].push(mw); //push the middleware onto the stack
+        } else if(typeof cs._mwstack[name] == 'object' && cs._mwstack[name] instanceof Array) { //if the stack is an Array 
+            return function(req, res, next) { //return a function that runs a stack of middleware
+                var _asyncme = []; //stack that holds async functions
+                cs._mwstack[name].forEach(function(v, i, a) {
+                    _asyncme.push(function(cb) { //convert middleware to an async function and push onto the stack
+                        v(req, res, function(err) {
+                            cb(err);
+                        });
+                    });
+                });
+                
+                async.series(_asyncme, function(err) { //run stack in a series
+                    if(!err) {
+                        next(); //do next if the series finished without errors
+                    }
+                });
+            };
+        }
+    };
+    
     cs.bind = function(mixed, data) { //bind a static directory or dynamic server to the app
         if(typeof mixed == 'object') { //if we are binding a dynamic server
             mixed.bind(app, express, io, data); //bind the dynamic server
@@ -59,9 +86,7 @@
             }
             
             if(continue_bind === true) {
-                cs._static_stack.push(function() { //push a static server factory onto the stack
-                    app.use(express.static(mixed));
-                });
+                cs.stack('static', express.static(mixed));
             }
         } else { //blank first argument
             cs.bind('./static'); //default static directory
@@ -95,13 +120,7 @@
     });
     
     cs.listen = function(port, hostname, backlog, callback) {
-        if(cs._static_stack !== 0) { //if the static stack isn't empty
-            cs._static_stack.forEach(function(v, i, a) { //for every static server factory
-                v(); //create a static server
-            });
-            
-            delete cs._static_stack; //remove the stack
-        }
+        app.use(cs.stack('static'));
         
         if(typeof cs.four_o_four == 'string') {
             fs.readFile(cs.four_o_four, function(err, data) {

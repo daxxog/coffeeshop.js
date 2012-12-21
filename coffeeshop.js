@@ -21,14 +21,12 @@
   }
 }(this, function () {
     var express = require('express'),
-        nodestatic = require('node-static'),
         async = require('async'),
         fs = require('fs'),
         path = require('path');
         
     var cs = {};
         cs.express = express;
-        cs.nodestatic = nodestatic;
         cs.async = async;
         
     var app = express(),
@@ -37,24 +35,22 @@
         
         cs.app = app;
     
-    cs._static_stack = []; //stack that holds (req, res) functions for static servers
-    cs._static_works = {}; //object that caches whether a static server can succesfully respond to a url. This way requests to servers that will respond with an error are never made
-    cs._static_err = {}; //object that keeps track of what static servers responded with what error code on what file. This is so two static servers don't both send an error
-    cs._static_fnd_err = {}; //object that keeps track of if we found an error type on a url. This is for the same reason as above.
+    app.use(express.compress());
+    
+    cs._static_stack = []; //stack that holds static server factory functions
     cs.bind = function(mixed, data) { //bind a static directory or dynamic server to the app
         if(typeof mixed == 'object') { //if we are binding a dynamic server
             mixed.bind(app, express, io, data); //bind the dynamic server
         } else if(typeof mixed == 'string') { //if we are binding a static directory
             var continue_bind = true; //do we want to continue the bind?
-            
+        
             if(typeof data == 'string') { //if data is a string
                 switch(data) { //parse the data string
                     case 'npm': //if we are binding to a static local npm module
                         mixed = path.join('./node_modules', mixed, './cs_serve'); //point to the cs_serve directory
                       break;
                     case '404': //if we are binding a 404 page
-                        cs.four_o_four = './' + path.basename(mixed); //bind the 404 page to all static servers
-                        cs.four_o_four_server = new(nodestatic.Server)(path.dirname(mixed)); //create a dedicated server for 404 pages
+                        cs.four_o_four = mixed;
                         continue_bind = false; //don't continue the bind operation
                       break;
                     default:
@@ -63,53 +59,9 @@
             }
             
             if(continue_bind === true) {
-                var _server = new(nodestatic.Server)(mixed); //create a static server from the directory
-                
-                var _id = cs._static_stack.push(function(req, res) { //push a (req, res) function onto the stack and get the _id
-                    if(typeof cs._static_works[req.url] == 'undefined' || cs._static_works[req.url] == _id) { //if we don't know what static server works for this url or we do know and this server is it
-                        _server.serve(req, res, function(err, result) { //serve it up
-                            if(err) { //if we need to handle an error
-                            
-                                /* START SETUP VARS */
-                                if(typeof cs._static_err[err.status] == 'undefined') {
-                                    cs._static_err[err.status] = {};
-                                }
-                                
-                                if(typeof cs._static_err[err.status][req.url] == 'undefined') {
-                                    cs._static_err[err.status][req.url] = [];
-                                }
-                                
-                                if(typeof cs._static_fnd_err[err.status] == 'undefined') {
-                                    cs._static_fnd_err[err.status] = {}
-                                }
-                                
-                                if(typeof cs._static_err[err.status][req.url] == 'undefined') {
-                                    cs._static_err[err.status][req.url] = false;
-                                }
-                                /* END SETUP VARS */
-                                
-                                if(cs._static_err[err.status][req.url].length === (cs._static_stack.length - 1)) { //if every other server got the same error
-                                    if(cs._static_fnd_err[err.status][req.url] === false || _id === (cs._static_stack.length - 1)) { //if we have't found this error on this url before or if this is the last server on the stack
-                                        cs._static_fnd_err[err.status][req.url] = true; //tell other servers we found and handled this error on this url
-                                        
-                                        if(err.status === 404 && (typeof cs.four_o_four == 'string')) {
-                                            cs.four_o_four_server.serveFile(cs.four_o_four, 404, {}, req, res);
-                                        } else {
-                                            res.writeHead(err.status, err.headers); //output HTTP error
-                                            res.end(); //end of response
-                                        }
-                                    }
-                                } else { //another server might be able to serve this url
-                                    if(cs._static_err[err.status][req.url].indexOf(_id) === -1) { //if we have't reported that we got this error before
-                                        cs._static_err[err.status][req.url].push(_id); //report that we got the error by pushing it onto a stack
-                                    }
-                                }
-                            } else { //we served the file successfully
-                                cs._static_works[req.url] = _id; //tell the other servers this server should handle all future requests to this url
-                            }
-                        });
-                    }
-                }) - 1;
+                cs._static_stack.push(function() {
+                    app.use(express.static(mixed));
+                });
             }
         } else { //blank first argument
             cs.bind('./static'); //default static directory
@@ -144,13 +96,23 @@
     
     cs.listen = function(port, hostname, backlog, callback) {
         if(cs._static_stack !== 0) { //if the static stack isn't empty
-            app.static_route = function(req, res) { //static requests
-                cs._static_stack.forEach(function(v, i, a) { //for every static server
-                    v(req, res); //try to handle the request
+            cs._static_stack.forEach(function(v, i, a) { //for every static server factory
+                v(); //create a static server
+            });
+        }
+        
+        if(typeof cs.four_o_four == 'string') {
+            fs.readFile(cs.four_o_four, function(err, data) {
+                app.use(function(req, res) {
+                    if(!err) {
+                        res.type(path.extname(cs.four_o_four));
+                        res.send(404, data);
+                    } else {
+                        console.log(err);
+                        //res.send('', 500);
+                    }
                 });
-            };
-            
-            app.get('*', app.static_route);
+            });
         }
         
         http.listen(port, hostname, backlog, callback); //pass arguments to http.listen

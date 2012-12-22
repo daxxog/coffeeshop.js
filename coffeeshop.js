@@ -37,8 +37,25 @@
     
     app.use(express.compress());
     
+    app.reload = cs.load = function(what, cb) { //generic loader / reloader function for caches and stuff
+        if(typeof cb != 'function') {
+            cb = function() {}; //blank function
+        }
+        
+        switch(what) {
+            case '404':
+                fs.readFile(cs.four_o_four, function(err, data) {
+                    cs.four_o_four_data = data;
+                    cb(err);
+                });
+              break;
+            default: 
+              break;
+        }
+    };
+    
     cs._mwstack = {}; //middleware stack object
-    app.mwstack = cs.stack = function(name, mw) { //stack some middleware
+    app.mwstack = cs.stack = function(name, mw) { //stack some middleware or return a stacked middleware
         if(typeof mw == 'function') { //if middleware is a function
             if(typeof cs._mwstack[name] == 'undefined') { //if we need to a place to store this middleware
                 cs._mwstack[name] = []; //make a new stack
@@ -123,16 +140,16 @@
         app.use(cs.stack('static'));
         
         if(typeof cs.four_o_four == 'string') {
-            fs.readFile(cs.four_o_four, function(err, data) {
-                app.use(function(req, res) {
-                    if(!err) {
+            cs.load('404', function(err) {
+                if(!err) {
+                    app.use(function(req, res) {
                         res.type(path.extname(cs.four_o_four)); //send the headers based on the file name
-                        res.send(404, data); //send a 404 with the data
-                    } else {
-                        console.log(err);
-                        res.send(500); //internal server error
-                    }
-                });
+                        res.send(404, cs.four_o_four_data); //send a 404 with the data
+                    });
+                } else {
+                    console.log(err);
+                    res.send(500); //internal server error
+                }
             });
         }
         

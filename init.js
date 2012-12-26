@@ -22,17 +22,26 @@
 }(this, function() {
     return function(pass, grab, data) { //custom init function
         var client = grab('client', pass), //grab the redis client
-            app = grab('app', pass); //grab the express app
+            app = grab('app', pass), //grab the express app
+            cb = grab('cb', pass); //grab the async callback
         
         console.log('init()');
         
         client.exists("tokens", function(err, exists) { //check if tokens exist
-            app.error(err, 'Error finding if tokens exist.');
+            if(err) {
+                cb([err, 'Error finding if tokens exist.']);
+            }
             
             if(exists !== 1) { //parse response (IF NOT EXIST)
                 client.set("tokens", "0", function(err, reply) { //create the tokens
-                    app.error(err, 'Error in tokens init.');
+                    if(err) {
+                        cb([err, 'Error in tokens init.']);
+                    } else {
+                        cb(null);
+                    }
                 });
+            } else { //we already have the tokens key
+                cb(null); //assume we are ready
             }
         });
     };

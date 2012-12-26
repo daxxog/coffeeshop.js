@@ -103,16 +103,14 @@
         switch(what) {
             case 'app':
                 return pass[0];
-              break;
             case 'express':
                 return pass[1];
-              break;
             case 'io':
                 return pass[2];
-              break;
             case 'client':
                 return pass[3];
-              break;
+            case 'cb': 
+                return pass[4];
         }
     };
     
@@ -124,8 +122,8 @@
                 mixed.bind([app, express, io, client], cs.grab, data); //bind the dynamic server
             });
         } else if(typeof mixed == 'function') { //if we are binding an init function
-            cs._init.push(function() { //push an action to do later
-                mixed([app, express, io, client], cs.grab, data);
+            cs._init.push(function(cb) { //push an action to do later
+                mixed([app, express, io, client, cb], cs.grab, data);
             });
         } else if(typeof mixed == 'string') { //if we are binding a static directory
             cs._bind.push(function() { //push an action to do later
@@ -181,33 +179,40 @@
     });
     
     cs.listen = function(port, hostname, backlog, callback) {
-        cs._init.forEach(function(v, i, a) { //run all the init functions
-            v();
-        });
-        delete cs._init; //remove all init functions after we are done running them
+        var _after_init = function() {
+            cs._bind.forEach(function(v, i, a) { //run all the bind functions
+                v();
+            });
+            delete cs._bind; //remove all bind functions after we are done running them
+            
+            app.use(cs.stack('static'));
+            
+            if(typeof cs.four_o_four == 'string') {
+                cs.load('404', function(err) {
+                    if(!err) {
+                        app.use(function(req, res) {
+                            res.type(path.extname(cs.four_o_four)); //send the headers based on the file name
+                            res.send(404, cs.four_o_four_data); //send a 404 with the data
+                        });
+                    } else {
+                        cs.error(err, 'Error sending 404!');
+                        res.send(500); //internal server error
+                    }
+                });
+            }
+            
+            http.listen(port, hostname, backlog, callback); //pass arguments to http.listen
+        };
         
-        cs._bind.forEach(function(v, i, a) { //run all the bind functions
-            v();
-        });
-        delete cs._bind; //remove all bind functions after we are done running them
-        
-        app.use(cs.stack('static'));
-        
-        if(typeof cs.four_o_four == 'string') {
-            cs.load('404', function(err) {
-                if(!err) {
-                    app.use(function(req, res) {
-                        res.type(path.extname(cs.four_o_four)); //send the headers based on the file name
-                        res.send(404, cs.four_o_four_data); //send a 404 with the data
-                    });
-                } else {
-                    cs.error(err, 'Error sending 404!');
-                    res.send(500); //internal server error
-                }
+        if(cs._init.length === 0) {
+            _after_init();
+        } else {
+            async.series(cs._init, function(err, results) {
+                cs.error(err, 'Error in init function'); //handle any errors
+                _after_init(); //run whatever we need to run when all the init is done
+                delete cs._init; //remove all init functions after we are done running them
             });
         }
-        
-        http.listen(port, hostname, backlog, callback); //pass arguments to http.listen
     };
     
     cs.set = function(name, value) { //wrapper for app.set(name, value)

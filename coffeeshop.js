@@ -88,18 +88,18 @@
         }
     };
     
-    cs._error = function(err, msg) {
+    cs._error = function(err, msg) { //default error handler, change using cs.error or app.error
         console.error([err, msgs]);
     };
-    app.error = cs.error = function(err, msg) {
-        if(typeof err == 'function') {
-            cs._error = err;
-        } else if(err) {
-            cs._error(err, msg);
+    app.error = cs.error = function(err, msg) { //bind a function for error handling or call the error handler
+        if(typeof err == 'function') { //if we are changing the error handler
+            cs._error = err; //bind the new error handler
+        } else if(err) { //if we have an error
+            cs._error(err, msg); //call the error handler
         }
     };
     
-    cs.grab = function(what, pass) {
+    cs.grab = function(what, pass) { //parser function for the pass array
         switch(what) {
             case 'app':
                 return pass[0];

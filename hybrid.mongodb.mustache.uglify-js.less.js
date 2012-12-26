@@ -9,8 +9,7 @@
 {
     "ts": 1347627537,
     "name": "./templates/index.html",
-    "hello": "world",
-    "_id": new ObjectID("50c00a32dbb8a5e35a000001")
+    "hello": "world"
 }
 */
 

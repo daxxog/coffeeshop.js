@@ -116,31 +116,39 @@
         }
     };
     
+    cs._init = []; //init binding functions stack
+    cs._bind = []; //binding functions stack
     cs.bind = function(mixed, data) { //bind a static directory or dynamic server to the app
         if(typeof mixed == 'object') { //if we are binding a dynamic server
-            mixed.bind([app, express, io, client], cs.grab, data); //bind the dynamic server
+            cs._bind.push(function() { //push an action to do later
+                mixed.bind([app, express, io, client], cs.grab, data); //bind the dynamic server
+            });
         } else if(typeof mixed == 'function') { //if we are binding an init function
-            mixed([app, express, io, client], cs.grab, data);
+            cs._init.push(function() { //push an action to do later
+                mixed([app, express, io, client], cs.grab, data);
+            });
         } else if(typeof mixed == 'string') { //if we are binding a static directory
-            var continue_bind = true; //do we want to continue the bind?
-        
-            if(typeof data == 'string') { //if data is a string
-                switch(data) { //parse the data string
-                    case 'npm': //if we are binding to a static local npm module
-                        mixed = path.join('./node_modules', mixed, './cs_serve'); //point to the cs_serve directory
-                      break;
-                    case '404': //if we are binding a 404 page
-                        cs.four_o_four = mixed; //bind the 404 page
-                        continue_bind = false; //don't continue the bind operation
-                      break;
-                    default:
-                      break;
-                }
-            }
+            cs._bind.push(function() { //push an action to do later
+                var continue_bind = true; //do we want to continue the bind?
             
-            if(continue_bind === true) {
-                cs.stack('static', express.static(mixed));
-            }
+                if(typeof data == 'string') { //if data is a string
+                    switch(data) { //parse the data string
+                        case 'npm': //if we are binding to a static local npm module
+                            mixed = path.join('./node_modules', mixed, './cs_serve'); //point to the cs_serve directory
+                          break;
+                        case '404': //if we are binding a 404 page
+                            cs.four_o_four = mixed; //bind the 404 page
+                            continue_bind = false; //don't continue the bind operation
+                          break;
+                        default:
+                          break;
+                    }
+                }
+                
+                if(continue_bind === true) {
+                    cs.stack('static', express.static(mixed));
+                }
+            });
         } else { //blank first argument
             cs.bind('./static'); //default static directory
         }
@@ -173,6 +181,16 @@
     });
     
     cs.listen = function(port, hostname, backlog, callback) {
+        cs._init.forEach(function(v, i, a) { //run all the init functions
+            v();
+        });
+        delete cs._init; //remove all init functions after we are done running them
+        
+        cs._bind.forEach(function(v, i, a) { //run all the bind functions
+            v();
+        });
+        delete cs._bind; //remove all bind functions after we are done running them
+        
         app.use(cs.stack('static'));
         
         if(typeof cs.four_o_four == 'string') {

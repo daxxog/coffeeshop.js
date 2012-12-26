@@ -5,7 +5,7 @@
  * http://www.apache.org/licenses/LICENSE-2.0.html  
  */
 
-var cs = require('coffeeshop'),
+var cs = require('./coffeeshop.js'),
     dynamic = require('./dynamic'),
     hybrid = require('./hybrid.mongodb.mustache.uglify-js.less'),
     error = require('./error'),
@@ -17,7 +17,7 @@ cs.set('hybrid-timer', 3000); //set the update interval for hybrid pages
 cs.error(error); //bind a custom error handler
 cs.error('not an error', 'yeah this is fake'); //throw a random fake error
 cs.bind(init);
-cs.bind('./static'); //bind a directory to the app
+cs.bind(); //bind default directory to the app
 cs.bind('cash.js', 'npm'); //bind a local npm module to the app 
 cs.bind('./static/404.html', '404'); //bind a 404 page to the app
 cs.bind('./static2'); //bind a second directory to the app

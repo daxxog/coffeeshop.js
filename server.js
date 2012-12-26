@@ -6,12 +6,17 @@
  */
 
 var cs = require('coffeeshop'),
-    dynamic = require('./dynamic.js'),
-    hybrid = require('./hybrid.mongodb.mustache.uglify-js.less');
+    dynamic = require('./dynamic'),
+    hybrid = require('./hybrid.mongodb.mustache.uglify-js.less'),
+    error = require('./error'),
+    init = require('./init');
     
 cs.set('message', 'Hello World!'); //pass a message to dynamic
 cs.mode('production'); //set the mode to production for everything
 cs.set('hybrid-timer', 3000); //set the update interval for hybrid pages
+cs.error(error); //bind a custom error handler
+cs.error('not an error', 'yeah this is fake'); //throw a random fake error
+cs.bind(init);
 cs.bind('./static'); //bind a directory to the app
 cs.bind('cash.js', 'npm'); //bind a local npm module to the app 
 cs.bind('./static/404.html', '404'); //bind a 404 page to the app

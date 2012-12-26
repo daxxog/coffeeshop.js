@@ -22,18 +22,22 @@
 }(this, function () {
     var express = require('express'),
         async = require('async'),
+        redis = require("redis"),
         fs = require('fs'),
         path = require('path');
         
     var cs = {};
         cs.express = express;
         cs.async = async;
+        cs.redis = redis;
         
     var app = express(),
         http = require('http').createServer(app),
-        io = require('socket.io').listen(http);
+        io = require('socket.io').listen(http),
+        client = redis.createClient();
         
         cs.app = app;
+        cs.client = client;
     
     app.use(express.compress());
     
@@ -74,7 +78,9 @@
                 });
                 
                 async.series(_asyncme, function(err) { //run stack in a series
-                    if(!err) {
+                    if(err) {
+                        cs.error(err, 'Error in middleware stack!');
+                    } else {
                         next(); //do next if the series finished without errors
                     }
                 });
@@ -82,9 +88,39 @@
         }
     };
     
+    cs._error = function(err, msg) {
+        console.error([err, msgs]);
+    };
+    app.error = cs.error = function(err, msg) {
+        if(typeof err == 'function') {
+            cs._error = err;
+        } else if(err) {
+            cs._error(err, msg);
+        }
+    };
+    
+    cs.grab = function(what, pass) {
+        switch(what) {
+            case 'app':
+                return pass[0];
+              break;
+            case 'express':
+                return pass[1];
+              break;
+            case 'io':
+                return pass[2];
+              break;
+            case 'client':
+                return pass[3];
+              break;
+        }
+    };
+    
     cs.bind = function(mixed, data) { //bind a static directory or dynamic server to the app
         if(typeof mixed == 'object') { //if we are binding a dynamic server
-            mixed.bind(app, express, io, data); //bind the dynamic server
+            mixed.bind([app, express, io, client], cs.grab, data); //bind the dynamic server
+        } else if(typeof mixed == 'function') { //if we are binding an init function
+            mixed([app, express, io, client], cs.grab, data);
         } else if(typeof mixed == 'string') { //if we are binding a static directory
             var continue_bind = true; //do we want to continue the bind?
         
@@ -147,7 +183,7 @@
                         res.send(404, cs.four_o_four_data); //send a 404 with the data
                     });
                 } else {
-                    console.log(err);
+                    cs.error(err, 'Error sending 404!');
                     res.send(500); //internal server error
                 }
             });
@@ -238,23 +274,22 @@
                                                             if(!err) {
                                                                 setTimeout(_callback, app.get('hybrid-timer')); //check for changes later
                                                             } else {
-                                                                console.error("cs.hybrid: error writing file "+writeTo);
+                                                                cs.error(err, 'cs.hybrid: error writing file '+writeTo);
                                                             }
                                                         });
                                                     } else {
-                                                        console.error(err);
-                                                        console.error("cs.hybrid: error rendering file "+struct[i]);
+                                                        cs.error(err, 'cs.hybrid: error rendering file '+struct[i]);
                                                     }
                                                 }, _writeTo, app, express);
                                             } else {
-                                                console.error("cs.hybrid: error reading file "+struct[i]);
+                                                cs.error(err, 'cs.hybrid: error reading file '+struct[i])
                                             }
                                         });
                                     })(v, i, struct, _callback);
                                 }
                                 
                                 if(err) {
-                                    console.error("cs.hybrid: error reading dir "+v.templatedir);
+                                    cs.error(err, 'cs.hybrid: error reading dir '+v.templatedir);
                                 }
                             });
                         } , function() { //else; nothing new
@@ -267,8 +302,7 @@
             }
         },
         function(err) {
-            console.error('cs.hybrid: ');
-            console.error(err);
+            cs.error(err, 'cs.hybrid: ');
         }
     );
 

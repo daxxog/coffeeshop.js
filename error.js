@@ -1,5 +1,5 @@
-/* coffeeshop.js / dynamic.js
- * example of a dynamic server [serve up that express-o in your coffeeshop.js]
+/* coffeeshop.js / error.js
+ * example of a custom error handler
  * (c) 2012 David (daXXog) Volm ><> + + + <><
  * Released under Apache License, Version 2.0:
  * http://www.apache.org/licenses/LICENSE-2.0.html  
@@ -20,21 +20,8 @@
         root.returnExports = factory();
   }
 }(this, function() {
-    var dynamic = {};
-    
-    dynamic.bind = function(pass, grab, data) {
-        var app = grab('app', pass),
-            express = grab('express', pass),
-            io = grab('io', pass);
-        
-        app.get('/expresso', function(req, res){
-            res.send(app.get('message'));
-        });
-        
-        io.sockets.on('connection', function (socket) {
-            socket.emit('alert', 'coffeeshop.js is cool! alert() is not!');
-        });
+    return function(err, msg) {
+        console.error('LIKE SCOOB, WE HAVE A SUPER CRAZY ERROR MANN!');
+        console.error([err, msg]);
     };
-    
-    return dynamic;
 }));

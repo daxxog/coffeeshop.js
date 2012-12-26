@@ -1,5 +1,5 @@
-/* coffeeshop.js / dynamic.js
- * example of a dynamic server [serve up that express-o in your coffeeshop.js]
+/* coffeeshop.js / init.js
+ * example of an init function
  * (c) 2012 David (daXXog) Volm ><> + + + <><
  * Released under Apache License, Version 2.0:
  * http://www.apache.org/licenses/LICENSE-2.0.html  
@@ -20,21 +20,20 @@
         root.returnExports = factory();
   }
 }(this, function() {
-    var dynamic = {};
-    
-    dynamic.bind = function(pass, grab, data) {
-        var app = grab('app', pass),
-            express = grab('express', pass),
-            io = grab('io', pass);
+    return function(pass, grab, data) { //custom init function
+        var client = grab('client', pass), //grab the redis client
+            app = grab('app', pass); //grab the express app
         
-        app.get('/expresso', function(req, res){
-            res.send(app.get('message'));
-        });
+        console.log('init()');
         
-        io.sockets.on('connection', function (socket) {
-            socket.emit('alert', 'coffeeshop.js is cool! alert() is not!');
+        client.exists("tokens", function(err, exists) { //check if tokens exist
+            app.error(err, 'Error finding if tokens exist.');
+            
+            if(exists !== 1) { //parse response (IF NOT EXIST)
+                client.set("tokens", "0", function(err, reply) { //create the tokens
+                    app.error(err, 'Error in tokens init.');
+                });
+            }
         });
     };
-    
-    return dynamic;
 }));

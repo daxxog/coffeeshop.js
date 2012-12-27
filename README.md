@@ -4,6 +4,11 @@ Loosely coupled full stack JavaScript. For realz.
 
 Install
 -------
+stable
+```bash
+npm install coffeeshop
+```
+edge
 ```bash
 npm install https://github.com/daxxog/coffeeshop.js/tarball/master
 ```

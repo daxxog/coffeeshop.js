@@ -24,6 +24,7 @@
         async = require('async'),
         redis = require("redis"),
         fs = require('fs'),
+        events = require('events'),
         path = require('path');
         
     var cs = {};
@@ -57,6 +58,8 @@
               break;
         }
     };
+    
+    cs.ee = app.ee = new events.EventEmitter(); //create a global EventEmitter
     
     cs._mwstack = {}; //middleware stack object
     app.mwstack = cs.stack = function(name, mw) { //stack some middleware or return a stacked middleware

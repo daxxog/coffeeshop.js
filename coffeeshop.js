@@ -100,6 +100,8 @@
         } else if(err) { //if we have an error
             cs._error(err, msg); //call the error handler
         }
+        
+        return !err; //return true if err isn't undefined, null, false, "", or 0
     };
     
     cs.grab = function(what, pass) { //parser function for the pass array

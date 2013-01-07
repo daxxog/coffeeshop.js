@@ -84,7 +84,9 @@
                     if(err) {
                         cs.error(err, 'Error in middleware stack!');
                     } else {
-                        next(); //do next if the series finished without errors
+                        if(typeof next == 'function') { //if we can execute next
+                            next(); //do next if the series finished without errors
+                        }
                     }
                 });
             };

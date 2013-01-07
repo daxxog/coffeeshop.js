@@ -83,10 +83,8 @@
                 async.series(_asyncme, function(err) { //run stack in a series
                     if(err) {
                         cs.error(err, 'Error in middleware stack!');
-                    } else {
-                        if(typeof next == 'function') { //if we can execute next
-                            next(); //do next if the series finished without errors
-                        }
+                    } else if(typeof next == 'function') { //if we can execute next
+                        next(); //do next if the series finished without errors
                     }
                 });
             };

@@ -21,23 +21,23 @@
   }
 }(this, function () {
     var express = require('express'),
+        Cluster = require('cluster2'),
         async = require('async'),
-        redis = require("redis"),
+        redis = require('redis'),
         fs = require('fs'),
         events = require('events'),
         path = require('path');
         
     var cs = {};
-        cs.express = express;
+        cs.express = express,
         cs.async = async;
-        cs.redis = redis;
         
     var app = express(),
         http = require('http').createServer(app),
         io = require('socket.io').listen(http),
         client = redis.createClient();
         
-        cs.app = app;
+        cs.app = app,
         cs.client = client;
     
     app.use(express.compress());
@@ -92,7 +92,7 @@
     };
     
     cs._error = function(err, msg) { //default error handler, change using cs.error or app.error
-        console.error([err, msgs]);
+        console.error([err, msg]);
     };
     app.error = cs.error = function(err, msg) { //bind a function for error handling or call the error handler
         if(typeof err == 'function') { //if we are changing the error handler
@@ -183,7 +183,11 @@
         app.set('hybrid-timer', 30000); //thirty second timer for hybrid renders
     });
     
-    cs.listen = function(port, hostname, backlog, callback) {
+    cs.mode("development", function() { //default development mode    
+        app.set('hybrid-timer', 2000); //two second timer for hybrid renders
+    });
+    
+    cs.listen = function(port, hostname) {
         var _after_init = function() {
             cs._bind.forEach(function(v, i, a) { //run all the bind functions
                 v();
@@ -206,7 +210,14 @@
                 });
             }
             
-            http.listen(port, hostname, backlog, callback); //pass arguments to http.listen
+            var c = new Cluster({
+                "port": port,
+                "host": hostname,
+                cluster: true
+            });
+            c.listen(function(cb) {
+                cb(http);
+            });
         };
         
         if(cs._init.length === 0) {

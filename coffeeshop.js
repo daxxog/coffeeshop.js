@@ -24,6 +24,7 @@
         Cluster = require('cluster2'),
         async = require('async'),
         redis = require('redis'),
+        cookie  = require('cookie'),
         fs = require('fs'),
         events = require('events'),
         path = require('path');
@@ -35,6 +36,7 @@
     var app = express(),
         http = require('http').createServer(app),
         io = require('socket.io').listen(http),
+        RedisStore = require('connect-redis')(express),
         client = redis.createClient();
         
         cs.app = app,
@@ -103,6 +105,48 @@
         
         return !err; //return true if err isn't undefined, null, false, "", or 0
     };
+    
+    cs.sock = function() {
+        if(typeof app.secret == 'undefined') {
+            app.secret = 'secret';
+        }
+        
+        app.use(express.cookieParser());
+        app.use(express.session({ //redis based sessions
+            store: new RedisStore({
+                "client": client,
+                "ttl": app.get('REDIS_TTL')
+            }),
+            secret: function() {
+                return app.secret;
+            }()
+        }));
+        
+        io.set('authorization', function (data, accept) {
+            // check if there's a cookie header
+            if (data.headers.cookie) {
+                // if there is, parse the cookie
+                data.cookie = cookie.parse(data.headers.cookie);
+                // note that you will need to use the same key to grad the
+                // session id, as you specified in the Express setup.
+                data.sessionID = data.cookie['connect.sid'];
+                
+                console.log(data.sessionID);
+            } else {
+               // if there isn't, turn down the connection with a message
+               // and leave the function.
+               return accept('No cookie transmitted.', false);
+            }
+            // accept the incoming connection
+            accept(null, true);
+        });
+        
+        io.sockets.on('connection', function (socket) {
+            console.log('A socket connected!');
+        });
+    };
+    
+    cs.sock();
     
     cs.grab = function(what, pass) { //parser function for the pass array
         switch(what) {

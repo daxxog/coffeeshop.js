@@ -186,7 +186,9 @@
     cs.mode("development", function() { //default development mode    
         app.set('hybrid-timer', 2000); //two second timer for hybrid renders
     });
-    
+
+    cs.cluster = false;
+
     cs.listen = function(port, hostname) {
         var _after_init = function() {
             cs._bind.forEach(function(v, i, a) { //run all the bind functions
@@ -210,14 +212,18 @@
                 });
             }
             
-            var c = new Cluster({
-                "port": port,
-                "host": hostname,
-                cluster: true
-            });
-            c.listen(function(cb) {
-                cb(http);
-            });
+            if(cs.cluster === true) {
+                var c = new Cluster({
+                    "port": port,
+                    "host": hostname,
+                    cluster: true
+                });
+                c.listen(function(cb) {
+                    cb(http);
+                });
+            } else {
+                http.listen(port, hostname); //pass arguments to http.listen
+            }
         };
         
         if(cs._init.length === 0) {

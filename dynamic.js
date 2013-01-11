@@ -23,16 +23,17 @@
     var dynamic = {};
     
     dynamic.bind = function(pass, grab, data) {
-        var app = grab('app', pass),
-            express = grab('express', pass),
-            io = grab('io', pass);
+        var app = grab('app', pass);
         
-        app.get('/expresso', function(req, res){
-            res.send(app.get('message'));
+        app.get('/expresso', function(req, res) {
+            var io = app.fakeIO('user'); //create some fake io for 'user'
+            io.emit('alert', 'coffeeshop.js is cool! alert() is not!'); //emit a message using fake io
+            res.send(app.get('message')); //send another message using res
         });
         
-        io.sockets.on('connection', function (socket) {
-            socket.emit('alert', 'coffeeshop.js is cool! alert() is not!');
+        app.sockAuth(function(obj, setID, accept) { //insecure socket authentication
+            setID('user'); //set the id to 'user'
+            accept(null, true); //accept the socket
         });
     };
     

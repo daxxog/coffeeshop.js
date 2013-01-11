@@ -41,6 +41,7 @@
         
         cs.app = app,
         cs.client = client;
+        cs.RedisStore = RedisStore;
     
     app.use(express.compress());
     
@@ -106,47 +107,109 @@
         return !err; //return true if err isn't undefined, null, false, "", or 0
     };
     
-    cs.sock = function() {
-        if(typeof app.secret == 'undefined') {
-            app.secret = 'secret';
+    cs._sockAuth = function(obj, setID, accept) { //basic defualt unsecure authentication
+        setID((new Date()).getTime().toString()); //use the current time as the user ID
+        accept(null, true); //accept the socket
+    };
+    app.sockAuth = cs.sockAuth = function(auth, accept, setID) { //_socketAuth function binding
+        if(typeof auth == 'function') {
+            cs._sockAuth = auth;
+            cs.sock(); //setup the socket auth
+        } else {
+            cs._sockAuth(auth, setID, accept);
         }
-        
-        app.use(express.cookieParser());
-        app.use(express.session({ //redis based sessions
-            store: new RedisStore({
-                "client": client,
-                "ttl": app.get('REDIS_TTL')
-            }),
-            secret: function() {
-                return app.secret;
-            }()
-        }));
-        
-        io.set('authorization', function (data, accept) {
-            // check if there's a cookie header
-            if (data.headers.cookie) {
-                // if there is, parse the cookie
-                data.cookie = cookie.parse(data.headers.cookie);
-                // note that you will need to use the same key to grad the
-                // session id, as you specified in the Express setup.
-                data.sessionID = data.cookie['connect.sid'];
-                
-                console.log(data.sessionID);
-            } else {
-               // if there isn't, turn down the connection with a message
-               // and leave the function.
-               return accept('No cookie transmitted.', false);
-            }
-            // accept the incoming connection
-            accept(null, true);
-        });
-        
-        io.sockets.on('connection', function (socket) {
-            console.log('A socket connected!');
-        });
     };
     
-    cs.sock();
+    app.fakeIO = cs.fakeIO = function(_id) { //create a fake io object for id
+        return {
+            "emit": function(id, data) { // basic io.emit emulation
+                client.lpush('_csse_'+_id, JSON.stringify({ //push the data onto a redis stack
+                    "id": id,
+                    "data": data
+                }), function(err, data) { //check for errors
+                    cs.error(err, 'Redis error while sending socket emit.');
+                });
+            }
+        };
+    };
+    
+    cs._sockInterval = 100; //default socket update interval
+    app.sockInterval = cs.sockInterval = function(iv) { //set or get the socket update interval
+        if(typeof iv == 'number') {
+            return cs._sockInterval = iv;
+        } else {
+            return cs._sockInterval;
+        }
+    };
+    
+    cs._sock = false; //flag that tells if we have set up the socket auth
+    cs.sock = function(interval) { //uses cookieParse() and session() with RedisStore
+        if(cs._sock === false) { //have we not setup the socket auth?
+            cs._sock = true; //say we set it up
+            if(typeof interval == 'number') { //if we are setting the interval
+                cs.sockInterval = interval; //set it
+            }
+            if(typeof app.secret == 'undefined') { //if we do not have app.secret
+                app.secret = 'secret'; //use a default
+            }
+            
+            app.use(express.cookieParser());
+            app.use(express.session({ //redis based sessions
+                store: new RedisStore({
+                    "client": client,
+                    "ttl": app.get('REDIS_TTL')
+                }),
+                secret: function() {
+                    return app.secret;
+                }()
+            }));
+            
+            var parseSessID = function(id) { //private function for parsing session IDs into what REDIS stores them as
+                var _id = id.toString().split('.');
+                return _id[0].replace('s:', 'sess:');
+            };
+            
+            io.set('authorization', function(data, accept) { //socket authorization
+                if(data.headers.cookie) { //if we have a cookie
+                    data.cookie = cookie.parse(data.headers.cookie); //parse the cookie
+                    data.sessionID = parseSessID(data.cookie['connect.sid']); //parse the sessionID
+                    
+                    client.get(data.sessionID, function(err, _data) { //grab the session from redis
+                        if(cs.error(err, 'Redis error while doing socket authorization.')) { //check for errors
+                            var obj = JSON.parse(_data); //parse the redis response into an object
+                            
+                            cs.sockAuth(obj, accept, function(id) { //setId
+                                data.userID = id; //set the userID in the socket
+                            });
+                        } else {
+                            accept('Redis error while doing socket authorization.', false); //check for errors
+                        }
+                    });
+                } else {
+                    accept('No cookie transmitted.', false); //check for errors
+                }
+            });
+            
+            io.sockets.on('connection', function(socket) { //when a user connects to this server (after authenticating)
+                var id = socket.handshake.userID; //grab the userID
+                
+                var socketLoop = setInterval(function() { //create an async loop to pop stuff from redis
+                    client.lpop('_csse_'+id, function(err, data) { //pop the emit data for our userID
+                        if(cs.error(err, 'Redis error while receiving socket emit.')) { //check for errors
+                            if(data !== null) { //if we have data that is not null
+                                var _data = JSON.parse(data); //parse the data
+                                socket.emit(_data.id, _data.data); //do a socket emit with the parsed data
+                            }
+                        }
+                    });
+                }, cs.sockInterval); //set the interval
+                
+                socket.on('disconnect', function() { //when the user disconnect from this server
+                    clearInterval(socketLoop); //destroy the loop that is popping stuff from redis
+                });
+            });
+        }
+    };
     
     cs.grab = function(what, pass) { //parser function for the pass array
         switch(what) {
@@ -160,6 +223,8 @@
                 return pass[3];
             case 'cb': 
                 return pass[4];
+            case 'store':
+                return pass[5];
         }
     };
     
@@ -168,11 +233,11 @@
     cs.bind = function(mixed, data) { //bind a static directory or dynamic server to the app
         if(typeof mixed == 'object') { //if we are binding a dynamic server
             cs._bind.push(function() { //push an action to do later
-                mixed.bind([app, express, io, client], cs.grab, data); //bind the dynamic server
+                mixed.bind([app, express, io, client, null, RedisStore], cs.grab, data); //bind the dynamic server
             });
         } else if(typeof mixed == 'function') { //if we are binding an init function
             cs._init.push(function(cb) { //push an action to do later
-                mixed([app, express, io, client, cb], cs.grab, data);
+                mixed([app, express, io, client, cb, null], cs.grab, data);
             });
         } else if(typeof mixed == 'string') { //if we are binding a static directory
             cs._bind.push(function() { //push an action to do later
@@ -256,13 +321,13 @@
                 });
             }
             
-            if(cs.cluster === true) {
-                var c = new Cluster({
+            if(cs.cluster === true) { //if we are using a cluster
+                var c = new Cluster({ //use it!
                     "port": port,
                     "host": hostname,
                     cluster: true
                 });
-                c.listen(function(cb) {
+                c.listen(function(cb) { //and listen with it
                     cb(http);
                 });
             } else {

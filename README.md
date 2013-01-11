@@ -2,6 +2,12 @@
 =============
 Loosely coupled full stack JavaScript. For realz.
 
+Dependencies
+------------
+Required: 
+* a [redis](http://redis.io/) server running on localhost
+
+
 Install
 -------
 stable
@@ -49,6 +55,9 @@ Current Features
 * Backend: [node.js](https://github.com/joyent/node)
 * Framework: [express](https://github.com/visionmedia/express)
 * Session database: [redis](https://github.com/mranney/node_redis)
+* Broadcasting: [express](https://github.com/visionmedia/express) > [redis](https://github.com/mranney/node_redis) > [socket.io](https://github.com/visionmedia/express)
+  * Authenticate socket.io sessions using express cookies
+  * Send authenticated users a message using a basic emit emulator
 * Static server: [express](https://github.com/visionmedia/express).static middleware
   * Multiple servers supported
   * Bind a npm to serve statically: [example npm package](https://github.com/daxxog/cash.js)
@@ -61,4 +70,5 @@ Current Features
 
 TODO
 ----
-* Authentication: passport.js
+* hash ring based redis api
+* clustering

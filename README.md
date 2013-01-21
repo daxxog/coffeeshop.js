@@ -70,5 +70,4 @@ Current Features
 
 TODO
 ----
-* hash ring based redis api
 * clustering

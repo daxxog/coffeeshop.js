@@ -11,6 +11,7 @@ var cs = require('coffeeshop'),
     error = require('./error'),
     init = require('./init');
     
+cs.ring(); //setup RedisRing
 cs.set('message', 'Hello World!'); //pass a message to dynamic
 cs.mode('production'); //set the mode to production for everything
 cs.set('hybrid-timer', 3000); //set the update interval for hybrid pages

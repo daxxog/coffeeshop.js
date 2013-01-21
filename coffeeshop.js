@@ -23,7 +23,7 @@
     var express = require('express'),
         Cluster = require('cluster2'),
         async = require('async'),
-        redis = require('redis'),
+        RedisRing = require('redis-ring'),
         cookie  = require('cookie'),
         fs = require('fs'),
         events = require('events'),
@@ -36,12 +36,22 @@
     var app = express(),
         http = require('http').createServer(app),
         io = require('socket.io').listen(http),
-        RedisStore = require('connect-redis')(express),
-        client = redis.createClient();
+        client,
+        RedisStore = require('connect-redis')(express);
         
-        cs.app = app,
-        cs.client = client;
+        cs.app = app;
         cs.RedisStore = RedisStore;
+    
+    cs.ring = function(ring) {
+        if(typeof ring == 'undefined') {
+            ring = [ //default ring
+                {"127.0.0.1:6379": 1}
+            ];
+        }
+        
+        client = new RedisRing(ring);
+        cs.client = client;
+    };
     
     app.use(express.compress());
     
@@ -123,7 +133,7 @@
     app.fakeIO = cs.fakeIO = function(_id) { //create a fake io object for id
         return {
             "emit": function(id, data) { // basic io.emit emulation
-                client.lpush('_csse_'+_id, JSON.stringify({ //push the data onto a redis stack
+                client.publish('_csse_'+_id, JSON.stringify({ //publish the data using redis Pub/Sub
                     "id": id,
                     "data": data
                 }), function(err, data) { //check for errors
@@ -133,14 +143,14 @@
         };
     };
     
-    cs._sockInterval = 100; //default socket update interval
+    /*cs._sockInterval = 100; //default socket update interval
     app.sockInterval = cs.sockInterval = function(iv) { //set or get the socket update interval
         if(typeof iv == 'number') {
             return cs._sockInterval = iv;
         } else {
             return cs._sockInterval;
         }
-    };
+    };*/
     
     cs._sock = false; //flag that tells if we have set up the socket auth
     cs.sock = function(interval) { //uses cookieParse() and session() with RedisStore
@@ -156,7 +166,7 @@
             app.use(express.cookieParser());
             app.use(express.session({ //redis based sessions
                 store: new RedisStore({
-                    "client": client,
+                    "client": client.spawnClient('store'),
                     "ttl": app.get('REDIS_TTL')
                 }),
                 secret: function() {
@@ -193,7 +203,14 @@
             io.sockets.on('connection', function(socket) { //when a user connects to this server (after authenticating)
                 var id = socket.handshake.userID; //grab the userID
                 
-                var socketLoop = setInterval(function() { //create an async loop to pop stuff from redis
+                var c = client.subscribe('_csse_'+id, function(data) {
+                    if(data !== null) { //if we have data that is not null
+                        var _data = JSON.parse(data); //parse the data
+                        socket.emit(_data.id, _data.data); //do a socket emit with the parsed data
+                    }
+                });
+                
+                /*var socketLoop = setInterval(function() { //create an async loop to pop stuff from redis
                     client.lpop('_csse_'+id, function(err, data) { //pop the emit data for our userID
                         if(cs.error(err, 'Redis error while receiving socket emit.')) { //check for errors
                             if(data !== null) { //if we have data that is not null
@@ -202,10 +219,11 @@
                             }
                         }
                     });
-                }, cs.sockInterval); //set the interval
-                
+                }, cs.sockInterval); //set the interval*/
+
                 socket.on('disconnect', function() { //when the user disconnect from this server
-                    clearInterval(socketLoop); //destroy the loop that is popping stuff from redis
+                    c.quit(); //kill the redis client
+                    //clearInterval(socketLoop); //destroy the loop that is popping stuff from redis
                 });
             });
         }

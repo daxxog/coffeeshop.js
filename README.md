@@ -54,7 +54,7 @@ Current Features
 ----------------
 * Backend: [node.js](https://github.com/joyent/node)
 * Framework: [express](https://github.com/visionmedia/express)
-* Session database: [redis](https://github.com/mranney/node_redis)
+* Session database: [redis-ring](https://github.com/daxxog/redis-ring)
 * Broadcasting: [express](https://github.com/visionmedia/express) > [redis](https://github.com/mranney/node_redis) > [socket.io](https://github.com/visionmedia/express)
   * Authenticate socket.io sessions using express cookies
   * Send authenticated users a message using a basic emit emulator

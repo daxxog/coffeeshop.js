@@ -3,7 +3,7 @@
     "description" : "Loosely coupled full stack JavaScript. For realz.",
     "homepage"    : "https://github.com/daxxog/coffeeshop.js",
     "main"        : "coffeeshop.js",
-    "version"     : "0.1.4",
+    "version"     : "0.1.5",
     "engines": { "node" : ">=0.8.15" },
     "maintainers": [{
         "name"  : "David Volm",
@@ -18,7 +18,8 @@
         "express" : "*",
         "socket.io" : "*",
         "async" : "*",
-        "redis-ring": "*",
+        "redis": "*",
+        "hiredis": "*",
         "cluster2" : "*",
         "cookie": "*",
         "connect-redis": "*"

@@ -23,7 +23,7 @@
     var express = require('express'),
         Cluster = require('cluster2'),
         async = require('async'),
-        RedisRing = require('redis-ring'),
+        redis = require('redis'),
         cookie  = require('cookie'),
         fs = require('fs'),
         events = require('events'),
@@ -36,22 +36,11 @@
     var app = express(),
         http = require('http').createServer(app),
         io = require('socket.io').listen(http),
-        client,
+        client = redis.createClient(),
         RedisStore = require('connect-redis')(express);
         
         cs.app = app;
         cs.RedisStore = RedisStore;
-    
-    cs.ring = function(ring) {
-        if(typeof ring == 'undefined') {
-            ring = [ //default ring
-                {"127.0.0.1:6379": 1}
-            ];
-        }
-        
-        client = new RedisRing(ring);
-        cs.client = client;
-    };
     
     app.use(express.compress());
     

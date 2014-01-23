@@ -20,7 +20,6 @@
         "async" : "*",
         "redis": "*",
         "hiredis": "*",
-        "cluster2" : "*",
         "cookie": "*",
         "connect-redis": "*"
     }

@@ -21,7 +21,7 @@
   }
 }(this, function () {
     var express = require('express'),
-        Cluster = require('cluster2'),
+        //Cluster = require('cluster2'),
         async = require('async'),
         redis = require('redis'),
         cookie  = require('cookie'),
@@ -329,6 +329,7 @@
             }
             
             if(cs.cluster === true) { //if we are using a cluster
+            /*-- start cluster delete
                 var c = new Cluster({ //use it!
                     "port": port,
                     "host": hostname,
@@ -337,6 +338,7 @@
                 c.listen(function(cb) { //and listen with it
                     cb(http);
                 });
+            end cluster delete --*/
             } else {
                 http.listen(port, hostname); //pass arguments to http.listen
             }

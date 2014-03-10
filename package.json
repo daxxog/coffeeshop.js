@@ -21,6 +21,6 @@
         "redis": "*",
         "hiredis": "*",
         "cookie": "*",
-        "connect-redis": "*"
+        "connect-redis": "1.4.5"
     }
 }

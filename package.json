@@ -15,7 +15,7 @@
         "url"  : "https://github.com/daxxog/coffeeshop.js.git"
     }],
     "dependencies": {
-        "express" : "*",
+        "express" : "3.5.1",
         "socket.io" : "*",
         "async" : "*",
         "redis": "*",
